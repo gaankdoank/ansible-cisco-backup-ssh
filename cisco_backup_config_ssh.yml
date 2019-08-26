@@ -1,0 +1,21 @@
+---
+- name: backup running-config script for cisco devices (by wahyu)
+  hosts: vcisco
+#  hosts: localhost
+  gather_facts: false
+  connection: network_cli
+  tasks:
+   - name: timestamp init
+     shell: "date +%Y-%m-%d"
+     register: tstamp
+   - name: backup config
+     ios_config:
+      backup: yes
+      backup_options:
+       dir_path: "/etc/ansible/playbook/backup/{{ tstamp.stdout }}"
+       filename: "{{ tstamp.stdout }}_{{ inventory_hostname }}.txt"
+   - name: get hostname from file config
+     shell: "/bin/cat /etc/ansible/playbook/backup/{{ tstamp.stdout }}/{{ tstamp.stdout }}_{{ inventory_hostname }}.txt | grep hostname | awk -F' ' '{print $2}'"
+     register: get_hostname
+   - name: rename file config
+     shell: "/bin/mv /etc/ansible/playbook/backup/{{ tstamp.stdout }}/{{ tstamp.stdout }}_{{ inventory_hostname }}.txt /etc/ansible/playbook/backup/{{ tstamp.stdout }}/{{ tstamp.stdout }}_{{ get_hostname.stdout }}.txt"
